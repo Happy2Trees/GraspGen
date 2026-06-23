@@ -19,5 +19,5 @@ RUN pip install -e .
 
 EXPOSE 5556
 
-ENTRYPOINT ["python", "tools/graspgen_server.py"]
+ENTRYPOINT ["python", "client-server/graspgen_server.py"]
 CMD ["--gripper_config", "/models/checkpoints/graspgen_robotiq_2f_140.yml", "--port", "5556"]

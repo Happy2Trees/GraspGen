@@ -24,7 +24,11 @@ RUN pip install pyrender==0.1.45 pyglet==2.1.6 && pip install PyOpenGL==3.1.5
 
 # Install pointnet2 modules
 COPY pointnet2_ops pointnet2_ops
-RUN pip install ./pointnet2_ops
+RUN CC=/usr/bin/g++ \
+    CXX=/usr/bin/g++ \
+    CUDAHOSTCXX=/usr/bin/g++ \
+    TORCH_CUDA_ARCH_LIST="8.6" \
+    pip install --no-build-isolation ./pointnet2_ops
 
 # Diffusion dependencies
 RUN pip install diffusers==0.11.1 timm==1.0.15
@@ -32,7 +36,7 @@ RUN pip install huggingface-hub==0.25.2
 
 # PointTransformerV3 dependencies
 RUN pip install addict yapf==0.40.1 tensorboardx sharedarray torch-geometric
-RUN pip install torch-scatter -f https://data.pyg.org/whl/torch-2.1.2+cu121.html
+RUN pip install torch-scatter -f https://data.pyg.org/whl/torch-2.1.0+cu121.html
 RUN pip install spconv-cu120
 
 # For the analytic model
