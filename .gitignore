@@ -63,6 +63,7 @@ _coverage/*
 build/*
 dist/*
 sdist/*
+pointnet2_ops/build/
 docs/_api/*
 docs/_rst/*
 docs/_build/*
