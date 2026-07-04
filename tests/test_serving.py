@@ -371,10 +371,18 @@ class TestLiveServer:
             assert "gripper_name" in meta
             assert "model_name" in meta
 
-    def test_live_infer_random_cloud(self):
+    def test_live_infer_synthetic_box_cloud(self):
+        # A structured graspable surface, not gaussian noise: on pure noise the
+        # model can legitimately propose zero grasps, which the server rejects.
         from grasp_gen.serving.zmq_client import GraspGenClient
 
-        pc = np.random.randn(2000, 3).astype(np.float32) * 0.05
+        rng = np.random.default_rng(42)
+        half = np.array([0.03, 0.04, 0.05], dtype=np.float32)
+        n = 2000
+        face_axis = rng.integers(0, 3, size=n)
+        face_sign = rng.choice([-1.0, 1.0], size=n).astype(np.float32)
+        pc = rng.uniform(-1.0, 1.0, size=(n, 3)).astype(np.float32) * half
+        pc[np.arange(n), face_axis] = half[face_axis] * face_sign
         with GraspGenClient(host="localhost", port=5556, wait_for_server=True, timeout_ms=60000) as client:
             grasps, confs = client.infer(
                 pc, num_grasps=50, topk_num_grasps=10,
@@ -382,10 +390,15 @@ class TestLiveServer:
             assert grasps.ndim == 3
             assert grasps.shape[1:] == (4, 4)
             assert len(confs) == len(grasps)
+            assert len(grasps) > 0
 
     def test_live_infer_example_pcd(self):
         from grasp_gen.serving.zmq_client import GraspGenClient
-        from tools.graspgen_client import load_point_cloud_from_file
+
+        tools_client = pytest.importorskip(
+            "tools.graspgen_client", reason="tools/graspgen_client.py not in this checkout"
+        )
+        load_point_cloud_from_file = tools_client.load_point_cloud_from_file
 
         if not os.path.exists(EXAMPLE_PCD):
             pytest.skip("Example PCD not found")
@@ -403,7 +416,11 @@ class TestLiveServer:
 
     def test_live_infer_example_mesh(self):
         from grasp_gen.serving.zmq_client import GraspGenClient
-        from tools.graspgen_client import load_point_cloud_from_mesh
+
+        tools_client = pytest.importorskip(
+            "tools.graspgen_client", reason="tools/graspgen_client.py not in this checkout"
+        )
+        load_point_cloud_from_mesh = tools_client.load_point_cloud_from_mesh
 
         if not os.path.exists(EXAMPLE_MESH):
             pytest.skip("Example mesh not found")
